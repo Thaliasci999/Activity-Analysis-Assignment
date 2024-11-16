@@ -1,0 +1,68 @@
+---
+title: "Activity Data Analysis"
+output: html_document
+---
+
+## Data Preview
+
+```{r}
+# 加载必要的库
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# 加载数据
+activity_data <- read.csv("/Users/talk139/Downloads/Coursera 课程/3-Data Science=Foundations using R/5-Reproducible Research/Week 2/activity.csv")
+
+# 查看数据的前几行
+head(activity_data)
+
+
+
+
+# 将日期列转换为日期格式
+activity_data$date <- ymd(activity_data$date)
+
+# 如果数据是每5分钟的步数，计算每个时间段的步数
+activity_data <- activity_data %>%
+  mutate(steps_per_5min = steps / 5)
+
+# 删除含有NA值的行
+activity_data <- activity_data %>%
+  filter(!is.na(steps))
+
+# 计算星期几
+activity_data$weekday <- weekdays(activity_data$date)
+
+
+
+
+
+# 将数据分为工作日和周末
+weekdays_data <- activity_data %>%
+  filter(weekday %in% c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday"))
+
+weekend_data <- activity_data %>%
+  filter(weekday %in% c("Saturday", "Sunday"))
+
+# 创建面板图
+ggplot() + 
+  geom_line(data = weekdays_data, aes(x = interval, y = steps_per_5min, color = "Weekday")) + 
+  geom_line(data = weekend_data, aes(x = interval, y = steps_per_5min, color = "Weekend")) + 
+  facet_wrap(~weekday, scales = "free") + 
+  labs(title = "Activity Pattern Comparison: Weekdays vs Weekends", x = "Time", y = "Steps per 5-minute Interval") + 
+  theme_minimal()
+
+
+
+
+# 汇总每个星期几的步数
+summary_stats <- activity_data %>%
+  group_by(weekday) %>%
+  summarise(total_steps = sum(steps, na.rm = TRUE),
+            avg_steps_per_5min = mean(steps_per_5min, na.rm = TRUE))
+
+# 查看汇总结果
+summary_stats
+
+
